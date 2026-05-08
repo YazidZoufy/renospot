@@ -7,110 +7,109 @@ import { MapView } from './components/MapView'
 
 type ViewMode = 'list' | 'map'
 
+const LogoMark = () => (
+  <svg width="40" height="40" viewBox="0 0 64 64" fill="none">
+    <rect width="64" height="64" rx="12" fill="var(--rs-brand-600)" />
+    <path d="M14 32 L32 16 L50 32" stroke="#F7F4EE" strokeWidth="3.2" strokeLinejoin="round" strokeLinecap="round"/>
+    <path d="M19 32 L19 48 L45 48 L45 32" stroke="#F7F4EE" strokeWidth="3.2" strokeLinejoin="round" strokeLinecap="round" opacity="0.55"/>
+    <rect x="24" y="42" width="3.5" height="4" rx="0.8" fill="#16C172"/>
+    <rect x="30.25" y="38" width="3.5" height="8" rx="0.8" fill="#16C172"/>
+    <rect x="36.5" y="33" width="3.5" height="13" rx="0.8" fill="#16C172"/>
+  </svg>
+)
+
 function App() {
   const { transactions, total, loading, error, filters, page, pageSize, applyFilters, setPage } = useDvf()
-  const [view, setView] = useState<ViewMode>('list')
   const mapData = useMapData(filters)
+  const [view, setView] = useState<ViewMode>('list')
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1e1b4b 40%, #0f172a 100%)' }}>
-      {/* Hero Header */}
-      <header className="relative overflow-hidden px-6 pt-10 pb-12">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500 opacity-10 rounded-full blur-3xl" />
-          <div className="absolute top-0 right-1/4 w-64 h-64 bg-violet-500 opacity-10 rounded-full blur-3xl" />
-        </div>
+    <div style={{ minHeight: '100vh', background: 'var(--rs-paper)' }}>
 
-        <div className="relative max-w-7xl mx-auto">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
-              R
-            </div>
-            <div>
-              <span className="text-white font-bold text-xl tracking-tight">Réno-Score</span>
-              <span className="ml-2 text-xs text-indigo-300 border border-indigo-700 rounded-full px-2 py-0.5">Paris</span>
-            </div>
-          </div>
+      {/* ── Header ─────────────────────────────────────────── */}
+      <header style={{ borderBottom: '1px solid var(--rs-ledger)', background: 'var(--rs-card)' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '20px 32px' }}>
 
-          <h1 className="text-4xl font-black text-white leading-tight max-w-2xl mb-3">
-            Trouvez les biens à{' '}
-            <span style={{ background: 'linear-gradient(90deg, #818cf8, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              fort potentiel
-            </span>{' '}
-            de rénovation
-          </h1>
-          <p className="text-slate-400 text-base max-w-xl mb-8">
-            Analysez les transactions DVF Paris et calculez instantanément le ROI d'une rénovation énergétique.
-          </p>
-
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            {/* Stats */}
-            <div className="flex flex-wrap gap-3">
-              {[
-                { label: 'Transactions Paris', value: loading ? '…' : total.toLocaleString('fr-FR'), icon: '🏙️' },
-                { label: 'Données DVF', value: '2024', icon: '📊' },
-                { label: 'Basé sur ADEME', value: 'DPE A→G', icon: '🌿' },
-              ].map(stat => (
-                <div key={stat.label}
-                  className="flex items-center gap-3 bg-white/5 backdrop-blur border border-white/10 rounded-xl px-4 py-3">
-                  <span className="text-xl">{stat.icon}</span>
-                  <div>
-                    <p className="text-white font-bold text-sm leading-none">{stat.value}</p>
-                    <p className="text-slate-400 text-xs mt-0.5">{stat.label}</p>
-                  </div>
+          {/* Brand row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <LogoMark />
+              <div>
+                <div style={{ fontFamily: 'var(--rs-font-serif)', fontSize: 24, fontWeight: 500, letterSpacing: '-0.03em', color: 'var(--rs-ink)', lineHeight: 1 }}>
+                  Réno<span style={{ color: 'var(--rs-brand-600)' }}>-Score</span>
                 </div>
-              ))}
+                <div style={{ fontSize: 11, color: 'var(--rs-ink-4)', marginTop: 3, fontFamily: 'var(--rs-font-mono)', letterSpacing: '0.04em' }}>
+                  Paris · DVF 2024
+                </div>
+              </div>
             </div>
 
             {/* View toggle */}
-            <div className="flex items-center bg-white/10 backdrop-blur border border-white/10 rounded-xl p-1 gap-1">
-              <button
-                onClick={() => setView('list')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  view === 'list' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <span>☰</span> Liste
-              </button>
-              <button
-                onClick={() => setView('map')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  view === 'map' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <span>🗺️</span> Carte
-              </button>
+            <div style={{ display: 'flex', background: 'var(--rs-paper-2)', border: '1px solid var(--rs-ledger)', borderRadius: 'var(--rs-r-md)', padding: 3, gap: 2 }}>
+              {(['list', 'map'] as ViewMode[]).map(v => (
+                <button key={v} onClick={() => setView(v)} style={{
+                  display: 'flex', alignItems: 'center', gap: 7,
+                  padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                  fontFamily: 'var(--rs-font-sans)', fontSize: 13, fontWeight: 500,
+                  background: view === v ? 'var(--rs-card)' : 'transparent',
+                  color: view === v ? 'var(--rs-ink)' : 'var(--rs-ink-3)',
+                  boxShadow: view === v ? 'var(--rs-shadow-sm)' : 'none',
+                  transition: 'all var(--rs-dur-fast) var(--rs-ease-out)',
+                }}>
+                  {v === 'list' ? '☰' : '🗺'} {v === 'list' ? 'Liste' : 'Carte'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Headline + stats */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24 }}>
+            <div>
+              <div style={{ fontSize: 11, fontFamily: 'var(--rs-font-sans)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--rs-brand-600)', marginBottom: 6 }}>
+                Analyse immobilière
+              </div>
+              <h1 style={{ fontFamily: 'var(--rs-font-serif)', fontSize: 32, fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--rs-ink)', lineHeight: 1.1, maxWidth: 520 }}>
+                Trouvez les biens à fort potentiel de rénovation
+              </h1>
+            </div>
+
+            {/* Stats pills */}
+            <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+              {[
+                { label: 'Transactions', value: loading ? '…' : total.toLocaleString('fr-FR') },
+                { label: 'Données', value: 'DVF 2024' },
+                { label: 'Référentiel', value: 'ADEME' },
+              ].map(s => (
+                <div key={s.label} style={{
+                  padding: '8px 14px', borderRadius: 'var(--rs-r-md)',
+                  background: 'var(--rs-paper)', border: '1px solid var(--rs-ledger)',
+                  textAlign: 'center',
+                }}>
+                  <div style={{ fontFamily: 'var(--rs-font-serif)', fontSize: 18, fontWeight: 500, color: 'var(--rs-ink)', fontVariantNumeric: 'tabular-nums' }}>{s.value}</div>
+                  <div style={{ fontSize: 11, color: 'var(--rs-ink-4)', marginTop: 1 }}>{s.label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </header>
 
-      {/* Content */}
-      <div className="bg-slate-50 rounded-t-3xl min-h-screen">
-        <main className="max-w-7xl mx-auto px-6 py-8 flex gap-6 items-start">
-          <FilterSidebar filters={filters} onApply={applyFilters} />
+      {/* ── Main ───────────────────────────────────────────── */}
+      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '28px 32px', display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+        <FilterSidebar filters={filters} onApply={applyFilters} />
 
-          {view === 'list' ? (
-            <TransactionList
-              transactions={transactions}
-              total={total}
-              loading={loading}
-              error={error}
-              page={page}
-              pageSize={pageSize}
-              onPageChange={setPage}
-            />
-          ) : (
-            <MapView
-              transactions={mapData.transactions}
-              total={mapData.total}
-              loaded={mapData.loaded}
-              loading={mapData.loading}
-            />
-          )}
-        </main>
-      </div>
+        {view === 'list' ? (
+          <TransactionList
+            transactions={transactions} total={total} loading={loading}
+            error={error} page={page} pageSize={pageSize} onPageChange={setPage}
+          />
+        ) : (
+          <MapView
+            transactions={mapData.transactions} total={mapData.total}
+            loaded={mapData.loaded} loading={mapData.loading}
+          />
+        )}
+      </main>
     </div>
   )
 }

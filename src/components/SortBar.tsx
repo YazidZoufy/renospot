@@ -2,110 +2,89 @@ import type { SortConfig, SortField } from '../types/sort'
 import type { DpeClass } from '../utils/reno'
 import { DPE_CLASSES } from '../utils/reno'
 
-interface Props {
-  sort: SortConfig
-  onChange: (sort: SortConfig) => void
-}
+interface Props { sort: SortConfig; onChange: (s: SortConfig) => void }
 
-const SORT_OPTIONS: { label: string; field: SortField; icon: string }[] = [
-  { label: 'Date',       field: 'date',       icon: '📅' },
-  { label: 'Prix',       field: 'price',      icon: '💶' },
-  { label: 'Prix/m²',   field: 'pricePerM2', icon: '📐' },
-  { label: 'Plus-value', field: 'netGain',    icon: '🚀' },
+const OPTIONS: { label: string; field: SortField }[] = [
+  { label: 'Date',       field: 'date'       },
+  { label: 'Prix',       field: 'price'      },
+  { label: 'Prix/m²',   field: 'pricePerM2' },
+  { label: '+ value',   field: 'netGain'    },
 ]
 
-const DPE_BG: Record<DpeClass, string> = {
-  A: '#16a34a', B: '#4ade80', C: '#a3e635',
-  D: '#facc15', E: '#fb923c', F: '#ea580c', G: '#dc2626',
-}
-const DPE_TEXT: Record<DpeClass, string> = {
-  A: '#fff', B: '#14532d', C: '#365314',
-  D: '#713f12', E: '#fff', F: '#fff', G: '#fff',
+const DPE_BG: Record<DpeClass, string> = { A:'#319B42', B:'#5BB660', C:'#B7CD3D', D:'#F4E70F', E:'#F0B40F', F:'#E87A19', G:'#C7251A' }
+const DPE_FG: Record<DpeClass, string> = { A:'#fff',    B:'#0B2A12', C:'#1A2200', D:'#2A2300', E:'#2A1A00', F:'#fff',    G:'#fff'    }
+
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick} style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      padding: '5px 12px', borderRadius: 'var(--rs-r-pill)', border: '1px solid',
+      borderColor: active ? 'var(--rs-score-500)' : 'var(--rs-ledger)',
+      background: active ? 'var(--rs-score-tint)' : 'var(--rs-card)',
+      color: active ? 'var(--rs-score-700)' : 'var(--rs-ink-2)',
+      fontSize: 12, fontWeight: active ? 600 : 400,
+      fontFamily: 'var(--rs-font-sans)', cursor: 'pointer',
+      transition: 'all var(--rs-dur-fast) var(--rs-ease-out)',
+    }}>
+      {children}
+    </button>
+  )
 }
 
 export function SortBar({ sort, onChange }: Props) {
-  function toggleField(field: SortField) {
-    if (sort.field === field) {
-      onChange({ ...sort, direction: sort.direction === 'asc' ? 'desc' : 'asc' })
-    } else {
-      onChange({ field, direction: 'desc', renoFrom: sort.renoFrom ?? 'G', renoTo: sort.renoTo ?? 'D' })
-    }
+  function toggle(field: SortField) {
+    onChange(sort.field === field
+      ? { ...sort, direction: sort.direction === 'asc' ? 'desc' : 'asc' }
+      : { ...sort, field, direction: 'desc' })
   }
 
   return (
-    <div className="mb-5 space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-slate-400 font-medium mr-1">Trier par</span>
-        {SORT_OPTIONS.map(opt => {
-          const active = sort.field === opt.field
-          return (
-            <button
-              key={opt.field}
-              onClick={() => toggleField(opt.field)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                active
-                  ? 'text-white shadow-sm shadow-indigo-200'
-                  : 'bg-white border border-slate-200 text-slate-500 hover:border-indigo-200 hover:text-indigo-500'
-              }`}
-              style={active ? { background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' } : {}}
-            >
-              <span>{opt.icon}</span>
-              {opt.label}
-              {active && (
-                <span className="opacity-80 text-[10px]">{sort.direction === 'desc' ? '↓' : '↑'}</span>
-              )}
-            </button>
-          )
-        })}
+    <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 11, color: 'var(--rs-ink-4)', fontWeight: 500 }}>Trier par</span>
+        {OPTIONS.map(o => (
+          <Chip key={o.field} active={sort.field === o.field} onClick={() => toggle(o.field)}>
+            {o.label}
+            {sort.field === o.field && <span style={{ opacity: 0.6 }}>{sort.direction === 'desc' ? '↓' : '↑'}</span>}
+          </Chip>
+        ))}
       </div>
 
       {sort.field === 'netGain' && (
-        <div className="flex flex-wrap items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
-          <span className="text-xs font-semibold text-amber-700">Scénario :</span>
+        <div style={{
+          display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10,
+          background: 'var(--rs-warn-bg)', border: '1px solid #F0E2A6',
+          borderRadius: 'var(--rs-r-md)', padding: '8px 14px',
+        }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--rs-warn-fg)' }}>Scénario :</span>
 
-          <div className="flex items-center gap-1">
-            {(['G', 'F', 'E', 'D', 'C', 'B'] as DpeClass[]).map(c => (
-              <button
-                key={c}
-                onClick={() => onChange({ ...sort, renoFrom: c })}
-                className={`w-6 h-6 rounded text-[11px] font-black transition-all ${
-                  sort.renoFrom === c ? 'ring-2 ring-offset-1 ring-amber-500 scale-110' : 'opacity-60 hover:opacity-90'
-                }`}
-                style={{ background: DPE_BG[c], color: DPE_TEXT[c] }}
-              >
-                {c}
-              </button>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {(['G','F','E','D'] as DpeClass[]).map(c => (
+              <button key={c} onClick={() => onChange({ ...sort, renoFrom: c })}
+                style={{ width: 24, height: 24, borderRadius: 4, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 11,
+                  background: DPE_BG[c], color: DPE_FG[c],
+                  outline: sort.renoFrom === c ? '2px solid var(--rs-ink)' : 'none', outlineOffset: 2,
+                }}>{c}</button>
             ))}
           </div>
 
-          <span className="text-amber-300 text-sm">→</span>
+          <span style={{ color: 'var(--rs-ledger-strong)' }}>→</span>
 
-          <div className="flex items-center gap-1">
-            {(['E', 'D', 'C', 'B', 'A'] as DpeClass[]).map(c => {
-              const fromIdx = DPE_CLASSES.indexOf(sort.renoFrom ?? 'G')
-              const toIdx = DPE_CLASSES.indexOf(c)
-              const valid = toIdx < fromIdx
+          <div style={{ display: 'flex', gap: 4 }}>
+            {(['C','D','B','A'] as DpeClass[]).map(c => {
+              const valid = DPE_CLASSES.indexOf(c) < DPE_CLASSES.indexOf(sort.renoFrom ?? 'G')
               return (
-                <button
-                  key={c}
-                  disabled={!valid}
-                  onClick={() => valid && onChange({ ...sort, renoTo: c })}
-                  className={`w-6 h-6 rounded text-[11px] font-black transition-all ${
-                    !valid
-                      ? 'cursor-not-allowed opacity-15'
-                      : sort.renoTo === c
-                      ? 'ring-2 ring-offset-1 ring-amber-500 scale-110'
-                      : 'opacity-60 hover:opacity-90'
-                  }`}
-                  style={valid ? { background: DPE_BG[c], color: DPE_TEXT[c] } : { background: '#e2e8f0', color: '#cbd5e1' }}
-                >
-                  {c}
-                </button>
+                <button key={c} disabled={!valid} onClick={() => valid && onChange({ ...sort, renoTo: c })}
+                  style={{ width: 24, height: 24, borderRadius: 4, border: 'none', fontWeight: 700, fontSize: 11,
+                    background: valid ? DPE_BG[c] : '#E8E2D6', color: valid ? DPE_FG[c] : '#9A9180',
+                    cursor: valid ? 'pointer' : 'not-allowed', opacity: valid ? 1 : 0.5,
+                    outline: sort.renoTo === c && valid ? '2px solid var(--rs-ink)' : 'none', outlineOffset: 2,
+                  }}>{c}</button>
               )
             })}
           </div>
 
-          <span className="text-xs text-amber-500 font-medium ml-auto">
+          <span style={{ fontSize: 11, color: 'var(--rs-warn-fg)', fontWeight: 600, marginLeft: 'auto' }}>
             {sort.renoFrom ?? 'G'} → {sort.renoTo ?? 'D'}
           </span>
         </div>

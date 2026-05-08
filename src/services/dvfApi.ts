@@ -1,7 +1,7 @@
 import rawData from '../data/dvf-paris.json'
 import type { DvfFilters, DvfTransaction } from '../types/dvf'
 
-const ALL_TRANSACTIONS: DvfTransaction[] = rawData as DvfTransaction[]
+export const ALL_TRANSACTIONS: DvfTransaction[] = rawData as DvfTransaction[]
 
 function applyFilters(data: DvfTransaction[], filters: DvfFilters): DvfTransaction[] {
   return data.filter(t => {

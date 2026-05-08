@@ -1,19 +1,117 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* ── Design tokens ─────────────────────────────────────────── */
+:root {
+  /* Surface */
+  --rs-paper:         #F7F4EE;
+  --rs-paper-2:       #EFEAE0;
+  --rs-paper-3:       #E4DDCD;
+  --rs-card:          #FFFFFF;
+  --rs-ledger:        #E8E2D6;
+  --rs-ledger-strong: #D6CDB9;
+
+  /* Ink */
+  --rs-ink:           #14110B;
+  --rs-ink-2:         #3D362A;
+  --rs-ink-3:         #6E6553;
+  --rs-ink-4:         #9A9180;
+  --rs-ink-inverse:   #F7F4EE;
+
+  /* Brand (forest green) */
+  --rs-brand-50:      #E8F1ED;
+  --rs-brand-100:     #C9DDD3;
+  --rs-brand-300:     #6C9985;
+  --rs-brand-500:     #2D7058;
+  --rs-brand-600:     #1E5A46;
+  --rs-brand-700:     #174A39;
+  --rs-brand-800:     #103024;
+  --rs-brand:         var(--rs-brand-600);
+  --rs-brand-on:      #FFFFFF;
+
+  /* Score (electric green — ROI+, CTAs) */
+  --rs-score-50:      #E2FBEE;
+  --rs-score-100:     #BBF4D6;
+  --rs-score-400:     #38D17F;
+  --rs-score-500:     #16C172;
+  --rs-score-600:     #0FA561;
+  --rs-score-700:     #0B7E4A;
+  --rs-score-tint:    rgba(22,193,114,0.10);
+
+  /* DPE — official French colors */
+  --rs-dpe-A:     #319B42; --rs-dpe-A-on: #FFFFFF;
+  --rs-dpe-B:     #5BB660; --rs-dpe-B-on: #0B2A12;
+  --rs-dpe-C:     #B7CD3D; --rs-dpe-C-on: #1A2200;
+  --rs-dpe-D:     #F4E70F; --rs-dpe-D-on: #2A2300;
+  --rs-dpe-E:     #F0B40F; --rs-dpe-E-on: #2A1A00;
+  --rs-dpe-F:     #E87A19; --rs-dpe-F-on: #FFFFFF;
+  --rs-dpe-G:     #C7251A; --rs-dpe-G-on: #FFFFFF;
+
+  /* Semantic */
+  --rs-success:    var(--rs-score-500);
+  --rs-success-fg: var(--rs-score-700);
+  --rs-success-bg: var(--rs-score-50);
+  --rs-warn:       #E89A0C;
+  --rs-warn-fg:    #7A4F00;
+  --rs-warn-bg:    #FCEFCE;
+  --rs-danger:     #C7251A;
+  --rs-danger-fg:  #821813;
+  --rs-danger-bg:  #FBE4E1;
+
+  /* Type */
+  --rs-font-sans:  "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --rs-font-serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --rs-font-mono:  "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Radii */
+  --rs-r-sm:   6px;
+  --rs-r-md:   10px;
+  --rs-r-lg:   16px;
+  --rs-r-xl:   20px;
+  --rs-r-pill: 9999px;
+
+  /* Shadows (warm-tinted) */
+  --rs-shadow-sm:     0 1px 2px rgba(40,30,15,0.06);
+  --rs-shadow-md:     0 6px 20px -8px rgba(40,30,15,0.12), 0 2px 6px rgba(40,30,15,0.05);
+  --rs-shadow-lg:     0 18px 40px -14px rgba(40,30,15,0.20), 0 4px 12px rgba(40,30,15,0.08);
+  --rs-shadow-result: 0 12px 32px -10px rgba(22,193,114,0.22), 0 2px 8px rgba(40,30,15,0.06);
+  --rs-shadow-focus:  0 0 0 2px var(--rs-paper), 0 0 0 4px var(--rs-score-500);
+
+  /* Motion */
+  --rs-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --rs-dur-fast: 120ms;
+  --rs-dur-base: 200ms;
+}
+
+/* ── Base ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  background-color: #f8fafc;
-  color: #1e293b;
+  font-family: var(--rs-font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--rs-ink);
+  background: var(--rs-paper);
 }
 
-/* Fix Leaflet marker icons (Vite asset pipeline) */
-.leaflet-default-icon-path {
-  background-image: none;
+::selection { background: var(--rs-score-tint); color: var(--rs-ink); }
+
+/* Leaflet marker fix */
+.leaflet-default-icon-path { background-image: none; }
+
+/* Map popup reset */
+.leaflet-popup-content-wrapper {
+  border-radius: 14px !important;
+  box-shadow: var(--rs-shadow-lg) !important;
+  border: 1px solid var(--rs-ledger) !important;
+  padding: 0 !important;
+  overflow: hidden;
 }
+.leaflet-popup-content { margin: 0 !important; width: auto !important; }
+.leaflet-popup-tip-container { display: none; }

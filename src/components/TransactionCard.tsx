@@ -1,86 +1,112 @@
+import { useState } from 'react'
 import type { DvfTransaction } from '../types/dvf'
 import { RenoCalculator } from './RenoCalculator'
 
-interface Props {
-  transaction: DvfTransaction
+interface Props { transaction: DvfTransaction }
+
+const TYPE_CONFIG: Record<string, { label: string; color: string }> = {
+  'Appartement':                                    { label: 'Appartement',      color: 'var(--rs-brand-600)' },
+  'Maison':                                         { label: 'Maison',           color: '#2A6FB5' },
+  'Local industriel. commercial ou assimilé':       { label: 'Local commercial', color: 'var(--rs-warn)' },
+  'Dépendance':                                     { label: 'Dépendance',       color: 'var(--rs-ink-3)' },
 }
 
-const TYPE_CONFIG: Record<string, { label: string; color: string; border: string; bg: string }> = {
-  Appartement:                                      { label: 'Appartement',      color: 'text-blue-600',   border: 'border-blue-400',   bg: 'bg-blue-50' },
-  Maison:                                           { label: 'Maison',           color: 'text-emerald-600', border: 'border-emerald-400', bg: 'bg-emerald-50' },
-  'Local industriel. commercial ou assimilé':       { label: 'Local commercial', color: 'text-orange-600', border: 'border-orange-400', bg: 'bg-orange-50' },
-  Dépendance:                                       { label: 'Dépendance',       color: 'text-slate-500',  border: 'border-slate-300',  bg: 'bg-slate-50' },
+function fmt(n: number) {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n)
 }
-
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(price)
-}
-
-function formatDate(dateStr: string): string {
-  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(dateStr))
+function fmtDate(d: string) {
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(d))
 }
 
 export function TransactionCard({ transaction: t }: Props) {
-  const config = TYPE_CONFIG[t.type_local] ?? TYPE_CONFIG['Dépendance']
-  const canCalculate = !!t.surface_reelle_bati && t.surface_reelle_bati > 0
-  const ppm2 = canCalculate ? Math.round(t.valeur_fonciere / t.surface_reelle_bati!) : null
+  const [hovered, setHovered] = useState(false)
+  const cfg = TYPE_CONFIG[t.type_local] ?? TYPE_CONFIG['Dépendance']
+  const hasSurface = !!t.surface_reelle_bati && t.surface_reelle_bati > 0
+  const ppm2 = hasSurface ? Math.round(t.valeur_fonciere / t.surface_reelle_bati!) : null
 
   return (
-    <div className={`bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden group`}>
-      {/* Top accent bar */}
-      <div className={`h-1 w-full ${config.border.replace('border-', 'bg-')}`} />
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: 'var(--rs-card)',
+        border: '1px solid var(--rs-ledger)',
+        borderRadius: 'var(--rs-r-lg)',
+        boxShadow: hovered ? 'var(--rs-shadow-lg)' : 'var(--rs-shadow-md)',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 0,
+        transition: 'box-shadow var(--rs-dur-base) var(--rs-ease-out)',
+      }}
+    >
+      {/* Top row: type chip + date */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          padding: '3px 10px', borderRadius: 'var(--rs-r-pill)',
+          background: 'var(--rs-paper-2)', border: '1px solid var(--rs-ledger)',
+          fontSize: 11, fontWeight: 500, color: cfg.color,
+        }}>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: cfg.color, display: 'inline-block' }} />
+          {cfg.label}
+        </span>
+        <span style={{ fontFamily: 'var(--rs-font-mono)', fontSize: 11, color: 'var(--rs-ink-4)' }}>
+          {fmtDate(t.date_mutation)}
+        </span>
+      </div>
 
-      <div className="p-5">
-        {/* Type badge + date */}
-        <div className="flex items-center justify-between mb-3">
-          <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg ${config.bg} ${config.color}`}>
-            {config.label}
-          </span>
-          <span className="text-xs text-slate-300">{formatDate(t.date_mutation)}</span>
+      {/* Address */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{
+          fontFamily: 'var(--rs-font-serif)', fontSize: 17, fontWeight: 500,
+          letterSpacing: '-0.01em', color: 'var(--rs-ink)', lineHeight: 1.25,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {t.adresse_numero ? `${t.adresse_numero} ` : ''}{t.adresse_nom_voie || '—'}
         </div>
+        <div style={{ fontSize: 12, color: 'var(--rs-ink-3)', marginTop: 3 }}>{t.com_name}</div>
+      </div>
 
-        {/* Address */}
-        <div className="mb-4">
-          <p className="text-sm font-semibold text-slate-800 leading-tight truncate">
-            {t.adresse_numero ? `${t.adresse_numero} ` : ''}{t.adresse_nom_voie || '—'}
-          </p>
-          <p className="text-xs text-slate-400 mt-0.5">{t.com_name}</p>
-        </div>
-
-        {/* Price block */}
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-2xl font-black text-slate-900 leading-none">
-              {formatPrice(t.valeur_fonciere)}
-            </p>
-            {ppm2 && (
-              <p className="text-xs text-slate-400 mt-1">
-                {ppm2.toLocaleString('fr-FR')} €/m²
-              </p>
-            )}
+      {/* Price row */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{
+            fontFamily: 'var(--rs-font-serif)', fontSize: 28, fontWeight: 500,
+            letterSpacing: '-0.02em', color: 'var(--rs-ink)', lineHeight: 1,
+            fontVariantNumeric: 'tabular-nums',
+          }}>
+            {fmt(t.valeur_fonciere)}
           </div>
-
-          {t.surface_reelle_bati && (
-            <div className="text-right">
-              <p className="text-lg font-bold text-slate-700">{t.surface_reelle_bati} m²</p>
-              {t.nombre_pieces_principales ? (
-                <p className="text-xs text-slate-400">
-                  {t.nombre_pieces_principales} pièce{t.nombre_pieces_principales > 1 ? 's' : ''}
-                </p>
-              ) : null}
+          {ppm2 && (
+            <div style={{ fontSize: 12, color: 'var(--rs-ink-4)', marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>
+              {ppm2.toLocaleString('fr-FR')} €/m²
             </div>
           )}
         </div>
 
-        {/* ROI section */}
-        {canCalculate ? (
-          <RenoCalculator surface={t.surface_reelle_bati!} currentValue={t.valeur_fonciere} />
-        ) : (
-          <div className="mt-4 pt-4 border-t border-slate-50">
-            <p className="text-xs text-slate-300 italic">Surface non renseignée — calcul ROI indisponible</p>
+        {t.surface_reelle_bati && (
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontFamily: 'var(--rs-font-sans)', fontSize: 15, fontWeight: 600, color: 'var(--rs-ink-2)' }}>
+              {t.surface_reelle_bati} m²
+            </div>
+            {t.nombre_pieces_principales ? (
+              <div style={{ fontSize: 12, color: 'var(--rs-ink-4)', marginTop: 2 }}>
+                {t.nombre_pieces_principales} pièce{t.nombre_pieces_principales > 1 ? 's' : ''}
+              </div>
+            ) : null}
           </div>
         )}
       </div>
+
+      {/* Divider */}
+      <div style={{ height: 1, background: 'var(--rs-ledger)', margin: '14px 0' }} />
+
+      {/* ROI */}
+      {hasSurface
+        ? <RenoCalculator transaction={t} />
+        : <div style={{ fontSize: 11, color: 'var(--rs-ink-4)', fontStyle: 'italic' }}>Surface non renseignée — ROI indisponible</div>
+      }
     </div>
   )
 }

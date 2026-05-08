@@ -6,13 +6,8 @@ import { TransactionCard } from './TransactionCard'
 import { SortBar } from './SortBar'
 
 interface Props {
-  transactions: DvfTransaction[]
-  total: number
-  loading: boolean
-  error: string | null
-  page: number
-  pageSize: number
-  onPageChange: (page: number) => void
+  transactions: DvfTransaction[]; total: number; loading: boolean
+  error: string | null; page: number; pageSize: number; onPageChange: (p: number) => void
 }
 
 const DEFAULT_SORT: SortConfig = { field: 'date', direction: 'desc', renoFrom: 'G', renoTo: 'D' }
@@ -22,36 +17,30 @@ export function TransactionList({ transactions, total, loading, error, page, pag
   const sorted = sortTransactions(transactions, sort)
   const totalPages = Math.ceil(total / pageSize)
   const start = page * pageSize + 1
-  const end = Math.min((page + 1) * pageSize, total)
+  const end   = Math.min((page + 1) * pageSize, total)
 
-  if (error) {
-    return (
-      <div className="flex-1 flex items-center justify-center py-20">
-        <div className="text-center bg-red-50 border border-red-100 rounded-2xl p-8 max-w-sm">
-          <div className="text-4xl mb-3">⚠️</div>
-          <p className="font-semibold text-red-700 mb-1">Erreur de chargement</p>
-          <p className="text-sm text-red-400">{error}</p>
-        </div>
+  if (error) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+      <div style={{ textAlign: 'center', background: 'var(--rs-danger-bg)', border: '1px solid rgba(199,37,26,0.2)', borderRadius: 'var(--rs-r-lg)', padding: '32px 40px' }}>
+        <div style={{ fontSize: 32, marginBottom: 10 }}>⚠️</div>
+        <div style={{ fontWeight: 600, color: 'var(--rs-danger-fg)', marginBottom: 4 }}>Erreur de chargement</div>
+        <div style={{ fontSize: 13, color: 'var(--rs-danger)' }}>{error}</div>
       </div>
-    )
-  }
+    </div>
+  )
 
   return (
-    <div className="flex-1 min-w-0">
-      {/* Count + sort */}
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-slate-500">
-          {loading ? (
-            <span className="inline-flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-              Chargement…
-            </span>
-          ) : (
-            <>
-              <span className="font-bold text-slate-800">{total.toLocaleString('fr-FR')}</span>
-              {' '}transactions{total > 0 && <span className="text-slate-300"> · {start}–{end}</span>}
-            </>
-          )}
+    <div style={{ flex: 1, minWidth: 0 }}>
+      {/* Count */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <p style={{ fontSize: 13, color: 'var(--rs-ink-3)' }}>
+          {loading
+            ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--rs-brand-300)', display: 'inline-block', animation: 'pulse 1s infinite' }} />
+                Chargement…
+              </span>
+            : <><span style={{ fontWeight: 700, color: 'var(--rs-ink)' }}>{total.toLocaleString('fr-FR')}</span> transactions{total > 0 && <span style={{ color: 'var(--rs-ink-4)' }}> · {start}–{end}</span>}</>
+          }
         </p>
       </div>
 
@@ -59,57 +48,37 @@ export function TransactionList({ transactions, total, loading, error, page, pag
 
       {/* Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
           {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-slate-100 overflow-hidden animate-pulse">
-              <div className="h-1 bg-slate-200" />
-              <div className="p-5 space-y-3">
-                <div className="flex justify-between">
-                  <div className="h-5 w-24 bg-slate-100 rounded-lg" />
-                  <div className="h-4 w-16 bg-slate-100 rounded" />
-                </div>
-                <div className="h-4 w-3/4 bg-slate-100 rounded" />
-                <div className="h-3 w-1/3 bg-slate-100 rounded" />
-                <div className="h-7 w-1/2 bg-slate-200 rounded mt-2" />
-                <div className="h-3 w-1/4 bg-slate-100 rounded" />
-                <div className="h-px bg-slate-100 mt-2" />
-                <div className="h-5 w-36 bg-slate-100 rounded" />
-              </div>
+            <div key={i} style={{ background: 'var(--rs-card)', border: '1px solid var(--rs-ledger)', borderRadius: 'var(--rs-r-lg)', padding: 20, boxShadow: 'var(--rs-shadow-sm)' }}>
+              {[['70%', 10], ['45%', 8], ['55%', 28], ['30%', 10]].map(([w, mt], j) => (
+                <div key={j} style={{ height: 14, background: 'var(--rs-paper-2)', borderRadius: 6, width: String(w), marginTop: Number(mt), animation: 'pulse 1.2s infinite' }} />
+              ))}
             </div>
           ))}
         </div>
       ) : sorted.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="text-5xl mb-4">🔍</div>
-          <p className="text-slate-600 font-semibold mb-1">Aucun résultat</p>
-          <p className="text-slate-400 text-sm">Essayez d'élargir vos filtres</p>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+          <div style={{ fontFamily: 'var(--rs-font-serif)', fontSize: 18, color: 'var(--rs-ink-2)', marginBottom: 4 }}>Aucun résultat</div>
+          <div style={{ fontSize: 13, color: 'var(--rs-ink-4)' }}>Essayez d'élargir vos filtres</div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {sorted.map(t => (
-            <TransactionCard key={t.id + t.date_mutation} transaction={t} />
-          ))}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+          {sorted.map(t => <TransactionCard key={t.id + t.date_mutation} transaction={t} />)}
         </div>
       )}
 
       {/* Pagination */}
       {totalPages > 1 && !loading && (
-        <div className="flex items-center justify-center gap-3 mt-10">
-          <button
-            onClick={() => onPageChange(page - 1)}
-            disabled={page === 0}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl border border-slate-200 bg-white text-slate-600 disabled:opacity-30 hover:border-indigo-200 hover:text-indigo-600 transition-all"
-          >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 36 }}>
+          <button onClick={() => onPageChange(page - 1)} disabled={page === 0}
+            style={{ padding: '8px 16px', borderRadius: 'var(--rs-r-md)', border: '1px solid var(--rs-ledger-strong)', background: 'var(--rs-card)', color: 'var(--rs-ink-2)', fontSize: 13, cursor: page === 0 ? 'default' : 'pointer', opacity: page === 0 ? 0.35 : 1, fontFamily: 'var(--rs-font-sans)' }}>
             ← Précédent
           </button>
-          <span className="text-sm text-slate-400 font-medium">
-            {page + 1} <span className="text-slate-200">/</span> {totalPages}
-          </span>
-          <button
-            onClick={() => onPageChange(page + 1)}
-            disabled={page >= totalPages - 1}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl border border-slate-200 bg-white text-slate-600 disabled:opacity-30 hover:border-indigo-200 hover:text-indigo-600 transition-all"
-          >
+          <span style={{ fontSize: 13, color: 'var(--rs-ink-4)' }}>{page + 1} / {totalPages}</span>
+          <button onClick={() => onPageChange(page + 1)} disabled={page >= totalPages - 1}
+            style={{ padding: '8px 16px', borderRadius: 'var(--rs-r-md)', border: '1px solid var(--rs-ledger-strong)', background: 'var(--rs-card)', color: 'var(--rs-ink-2)', fontSize: 13, cursor: page >= totalPages - 1 ? 'default' : 'pointer', opacity: page >= totalPages - 1 ? 0.35 : 1, fontFamily: 'var(--rs-font-sans)' }}>
             Suivant →
           </button>
         </div>
