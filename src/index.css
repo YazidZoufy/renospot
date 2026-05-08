@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: #f8fafc;
+  color: #1e293b;
+}
+
+/* Fix Leaflet marker icons (Vite asset pipeline) */
+.leaflet-default-icon-path {
+  background-image: none;
+}
