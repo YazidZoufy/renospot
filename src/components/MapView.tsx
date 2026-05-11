@@ -37,9 +37,6 @@ function makePinIcon(bg: string, fg: string, label: string): L.DivIcon {
 function fmt(n: number) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n)
 }
-function fmtDate(d: string) {
-  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(d))
-}
 
 const TYPE_LABEL: Record<string, string> = {
   'Appartement': 'Appartement',
