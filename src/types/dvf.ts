@@ -12,6 +12,7 @@ export interface DvfTransaction {
   type_local: TypeLocal
   longitude: number | null
   latitude: number | null
+  dpe_classe?: 'E' | 'F' | 'G'
 }
 
 export type TypeLocal =

@@ -1,6 +1,7 @@
 import type { DvfTransaction } from '../types/dvf'
 import type { SortConfig } from '../types/sort'
-import { calculateRoi } from './reno'
+import { computeRenoEstimate } from './reno'
+import { ALL_TRANSACTIONS } from '../services/dvfApi'
 
 export function sortTransactions(transactions: DvfTransaction[], sort: SortConfig): DvfTransaction[] {
   const dir = sort.direction === 'asc' ? 1 : -1
@@ -19,16 +20,14 @@ export function sortTransactions(transactions: DvfTransaction[], sort: SortConfi
         return dir * (aM2 - bM2)
       }
 
-      case 'netGain': {
-        const from = sort.renoFrom ?? 'G'
-        const to = sort.renoTo ?? 'D'
-        const aGain = a.surface_reelle_bati
-          ? (calculateRoi(from, to, a.surface_reelle_bati, a.valeur_fonciere)?.netGain ?? -Infinity)
+      case 'uplift': {
+        const aUp = a.dpe_classe && a.surface_reelle_bati
+          ? (computeRenoEstimate(a, ALL_TRANSACTIONS, a.dpe_classe)?.valueUpliftPct ?? -Infinity)
           : -Infinity
-        const bGain = b.surface_reelle_bati
-          ? (calculateRoi(from, to, b.surface_reelle_bati, b.valeur_fonciere)?.netGain ?? -Infinity)
+        const bUp = b.dpe_classe && b.surface_reelle_bati
+          ? (computeRenoEstimate(b, ALL_TRANSACTIONS, b.dpe_classe)?.valueUpliftPct ?? -Infinity)
           : -Infinity
-        return dir * (aGain - bGain)
+        return dir * (aUp - bUp)
       }
 
       default:

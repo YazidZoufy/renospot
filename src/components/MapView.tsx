@@ -1,22 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import type { DvfTransaction } from '../types/dvf'
 import { computeRenoEstimate, type DpeClass } from '../utils/reno'
 import { ALL_TRANSACTIONS } from '../services/dvfApi'
 
-const DPE_BG: Record<DpeClass, string> = { A:'#319B42', B:'#5BB660', C:'#B7CD3D', D:'#F4E70F', E:'#F0B40F', F:'#E87A19', G:'#C7251A' }
-const DPE_FG: Record<DpeClass, string> = { A:'#fff',    B:'#0B2A12', C:'#1A2200', D:'#2A2300', E:'#2A1A00', F:'#fff',    G:'#fff'    }
+const DPE_BG: Record<string, string> = { E:'#F0B40F', F:'#E87A19', G:'#C7251A' }
+const DPE_FG: Record<string, string> = { E:'#2A1A00', F:'#fff',    G:'#fff'    }
 
-function roiColor(roi: number): string {
-  if (roi >= 60) return '#16C172'
-  if (roi >= 20) return '#F0B40F'
-  if (roi >=  0) return '#E87A19'
+function upliftColor(pct: number): string {
+  if (pct >= 15) return '#16C172'
+  if (pct >= 10) return '#F0B40F'
+  if (pct >=  5) return '#E87A19'
   return '#C7251A'
 }
-function roiTextColor(roi: number): string {
-  if (roi >= 60) return '#062014'
-  if (roi >= 20) return '#2A1A00'
+function upliftTextColor(pct: number): string {
+  if (pct >= 15) return '#062014'
+  if (pct >= 10) return '#2A1A00'
   return '#fff'
 }
 
@@ -48,8 +48,6 @@ const TYPE_LABEL: Record<string, string> = {
   'Dépendance': 'Dépendance',
 }
 
-const DPE_NEEDS_RENO: DpeClass[] = ['E', 'F', 'G']
-
 function MapRecenter({ transactions }: { transactions: DvfTransaction[] }) {
   const map = useMap()
   useEffect(() => {
@@ -60,32 +58,26 @@ function MapRecenter({ transactions }: { transactions: DvfTransaction[] }) {
   return null
 }
 
-function DpePicker({ value, onChange }: { value: DpeClass; onChange: (c: DpeClass) => void }) {
+function Legend() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10,
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10,
       background: 'var(--rs-card)', border: '1px solid var(--rs-ledger)',
       borderRadius: 'var(--rs-r-md)', padding: '8px 14px', boxShadow: 'var(--rs-shadow-sm)' }}>
-      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--rs-ink-3)', fontFamily: 'var(--rs-font-mono)',
-        textTransform: 'uppercase', letterSpacing: '0.06em' }}>DPE actuel</span>
-      <div style={{ display: 'flex', gap: 4 }}>
-        {(['E','F','G'] as DpeClass[]).map(c => (
-          <button key={c} onClick={() => onChange(c)}
-            style={{ width: 26, height: 26, borderRadius: 5, border: 'none', cursor: 'pointer',
-              fontWeight: 700, fontSize: 12, background: DPE_BG[c], color: DPE_FG[c],
-              outline: value === c ? '2px solid var(--rs-ink)' : 'none', outlineOffset: 2 }}>
-            {c}
-          </button>
+      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--rs-ink-3)',
+        fontFamily: 'var(--rs-font-mono)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ROI</span>
+      {([['#16C172','≥ 15%'],['#F0B40F','10–15%'],['#E87A19','5–10%'],['#C7251A','< 5%']] as [string,string][]).map(([c,l]) => (
+        <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
+          <span style={{ fontSize: 11, color: 'var(--rs-ink-4)' }}>{l}</span>
+        </div>
+      ))}
+      <div style={{ borderLeft: '1px solid var(--rs-ledger)', paddingLeft: 10, marginLeft: 4,
+        display: 'flex', gap: 6 }}>
+        {(['E','F','G'] as const).map(c => (
+          <span key={c} style={{ fontSize: 11, fontWeight: 700, padding: '1px 6px', borderRadius: 4,
+            background: DPE_BG[c], color: DPE_FG[c] }}>{c}</span>
         ))}
-      </div>
-      <span style={{ fontSize: 11, color: 'var(--rs-ink-4)' }}>→ objectif D</span>
-      {/* Legend */}
-      <div style={{ borderLeft: '1px solid var(--rs-ledger)', paddingLeft: 10, marginLeft: 4, display: 'flex', gap: 10 }}>
-        {([['#16C172','≥ 60%'],['#F0B40F','20–60%'],['#E87A19','0–20%'],['#C7251A','< 0%']] as [string,string][]).map(([c,l]) => (
-          <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
-            <span style={{ fontSize: 11, color: 'var(--rs-ink-4)' }}>{l}</span>
-          </div>
-        ))}
+        <span style={{ fontSize: 11, color: 'var(--rs-ink-4)' }}>DPE réel → D</span>
       </div>
     </div>
   )
@@ -94,9 +86,7 @@ function DpePicker({ value, onChange }: { value: DpeClass; onChange: (c: DpeClas
 interface Props { transactions: DvfTransaction[]; total: number; loaded: number; loading: boolean }
 
 export function MapView({ transactions, total, loaded, loading }: Props) {
-  const [currentDpe, setCurrentDpe] = useState<DpeClass>('F')
-
-  const withCoords = transactions.filter(t => t.latitude && t.longitude)
+  const withCoords = transactions.filter(t => t.latitude && t.longitude && t.dpe_classe)
   const pct = total > 0 ? Math.round((loaded / Math.min(total, 500)) * 100) : 0
 
   return (
@@ -112,7 +102,7 @@ export function MapView({ transactions, total, loaded, loading }: Props) {
             : <><span style={{ fontWeight: 700, color: 'var(--rs-ink)' }}>{withCoords.length.toLocaleString('fr-FR')}</span> biens localisés</>
           }
         </p>
-        <DpePicker value={currentDpe} onChange={setCurrentDpe} />
+        <Legend />
       </div>
 
       {/* Map */}
@@ -128,13 +118,11 @@ export function MapView({ transactions, total, loaded, loading }: Props) {
           <MapRecenter transactions={withCoords} />
 
           {withCoords.map(t => {
-            const needsReno = DPE_NEEDS_RENO.includes(currentDpe)
-            const result = needsReno && t.surface_reelle_bati
-              ? computeRenoEstimate(t, ALL_TRANSACTIONS, currentDpe)
-              : null
-            const pinBg    = result ? roiColor(result.roi) : '#9A9180'
-            const pinFg    = result ? roiTextColor(result.roi) : '#fff'
-            const pinLabel = result ? (result.roi >= 0 ? `+${Math.round(result.roi)}%` : `${Math.round(result.roi)}%`) : '–'
+            const dpe = t.dpe_classe as DpeClass
+            const result = computeRenoEstimate(t, ALL_TRANSACTIONS, dpe)
+            const pinBg    = result ? upliftColor(result.valueUpliftPct) : '#9A9180'
+            const pinFg    = result ? upliftTextColor(result.valueUpliftPct) : '#fff'
+            const pinLabel = result ? `+${result.valueUpliftPct.toFixed(0)}%` : '–'
             const icon = makePinIcon(pinBg, pinFg, pinLabel)
             const ppm2 = t.surface_reelle_bati ? Math.round(t.valeur_fonciere / t.surface_reelle_bati) : null
 
@@ -148,8 +136,9 @@ export function MapView({ transactions, total, loaded, loading }: Props) {
                         background: 'var(--rs-brand-50)', padding: '2px 8px', borderRadius: 99 }}>
                         {TYPE_LABEL[t.type_local] ?? t.type_local}
                       </span>
-                      <span style={{ fontFamily: 'var(--rs-font-mono)', fontSize: 10, color: 'var(--rs-ink-4)' }}>
-                        {fmtDate(t.date_mutation)}
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 6px', borderRadius: 4,
+                        background: DPE_BG[dpe], color: DPE_FG[dpe] }}>
+                        {dpe}
                       </span>
                     </div>
 
@@ -185,41 +174,33 @@ export function MapView({ transactions, total, loaded, loading }: Props) {
                       )}
                     </div>
 
-                    {/* ROI block — only gain + ROI % */}
+                    {/* ROI block */}
                     {result ? (
                       <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 10,
-                        background: result.netGain >= 0 ? '#E2FBEE' : '#FBE4E1',
-                        border: `1px solid ${result.netGain >= 0 ? '#BBF4D6' : 'rgba(199,37,26,0.2)'}` }}>
+                        background: '#E2FBEE', border: '1px solid #BBF4D6' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div>
-                            <div style={{ fontSize: 10, color: 'var(--rs-ink-4)', marginBottom: 3 }}>Gain potentiel net</div>
+                            <div style={{ fontSize: 10, color: 'var(--rs-ink-4)', marginBottom: 3 }}>Gain estimé</div>
                             <div style={{ fontFamily: 'var(--rs-font-serif)', fontSize: 16, fontWeight: 500,
-                              color: result.netGain >= 0 ? '#0B7E4A' : '#821813',
-                              fontVariantNumeric: 'tabular-nums' }}>
-                              {result.netGain >= 0 ? '+' : ''}{fmt(result.netGain)}
+                              color: '#0B7E4A', fontVariantNumeric: 'tabular-nums' }}>
+                              +{fmt(result.grossGain)}
                             </div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: 10, color: 'var(--rs-ink-4)', marginBottom: 3 }}>ROI</div>
+                            <div style={{ fontSize: 10, color: 'var(--rs-ink-4)', marginBottom: 3 }}>vs prix actuel</div>
                             <div style={{ fontFamily: 'var(--rs-font-serif)', fontSize: 20, fontWeight: 500,
-                              color: result.roi >= 0 ? '#0B7E4A' : '#821813' }}>
-                              {result.roi >= 0 ? '+' : ''}{result.roi.toFixed(0)}%
+                              color: '#0B7E4A' }}>
+                              +{result.valueUpliftPct.toFixed(1)}%
                             </div>
                           </div>
                         </div>
                         <div style={{ marginTop: 6, height: 3, background: 'rgba(0,0,0,0.08)', borderRadius: 99, overflow: 'hidden' }}>
                           <div style={{ height: '100%', borderRadius: 99,
-                            width: `${Math.max(0, Math.min(100, ((result.roi + 100) / 300) * 100))}%`,
-                            background: result.netGain >= 0 ? '#16C172' : '#C7251A' }} />
+                            width: `${Math.min(100, result.valueUpliftPct * 5)}%`,
+                            background: '#16C172' }} />
                         </div>
                       </div>
-                    ) : (
-                      <div style={{ marginTop: 10, padding: '8px 10px', borderRadius: 8, background: 'var(--rs-paper-2)' }}>
-                        <span style={{ fontSize: 11, color: 'var(--rs-ink-4)', fontStyle: 'italic' }}>
-                          {!t.surface_reelle_bati ? 'Surface non renseignée' : 'Classe DPE ≤ D — pas de rénovation requise'}
-                        </span>
-                      </div>
-                    )}
+                    ) : null}
                   </div>
                 </Popup>
               </Marker>
@@ -228,8 +209,8 @@ export function MapView({ transactions, total, loaded, loading }: Props) {
         </MapContainer>
 
         {loading && (
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(247,244,238,0.75)', backdropFilter: 'blur(4px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(247,244,238,0.75)',
+            backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ width: 32, height: 32, border: '2px solid var(--rs-ledger-strong)',
                 borderTopColor: 'var(--rs-brand-600)', borderRadius: '50%',

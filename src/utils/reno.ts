@@ -103,10 +103,7 @@ export interface RenoEstimate {
 
   // Result
   grossGain: number               // postReno - currentEstimated
-  renoCost: number                // ADEME cost × surface
-  netGain: number                 // grossGain - renoCost
-  roi: number                     // netGain / renoCost × 100
-  paybackYears: number            // renoCost / annual energy savings
+  valueUpliftPct: number          // grossGain / estimatedCurrentValue × 100
 }
 
 export function computeRenoEstimate(
@@ -125,19 +122,13 @@ export function computeRenoEstimate(
   const estimatedCurrentValue = medianPriceM2 * surface * (1 + DPE_COEFF[currentDpe])
   const postRenoValue          = medianPriceM2 * surface // DPE D = coeff 0
 
-  const grossGain  = postRenoValue - estimatedCurrentValue
-  const costPerM2  = RENO_COST_TO_D[currentDpe] ?? 0
-  const renoCost   = costPerM2 * surface
-  const netGain    = grossGain - renoCost
-  const roi        = renoCost > 0 ? (netGain / renoCost) * 100 : 0
-
-  const annualSavings = (ENERGY_COST_M2[currentDpe] - ENERGY_COST_M2['D']) * surface
-  const paybackYears  = annualSavings > 0 ? renoCost / annualSavings : Infinity
+  const grossGain      = postRenoValue - estimatedCurrentValue
+  const valueUpliftPct = (grossGain / estimatedCurrentValue) * 100
 
   return {
     medianPriceM2, comparableCount: count, scope,
     currentDpe, estimatedCurrentValue, postRenoValue,
-    grossGain, renoCost, netGain, roi, paybackYears,
+    grossGain, valueUpliftPct,
   }
 }
 
