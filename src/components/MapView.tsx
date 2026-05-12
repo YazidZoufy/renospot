@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import type { DvfTransaction } from '../types/dvf'
@@ -83,6 +84,7 @@ function Legend() {
 interface Props { transactions: DvfTransaction[]; total: number; loaded: number; loading: boolean }
 
 export function MapView({ transactions, total, loaded, loading }: Props) {
+  const isMobile = useIsMobile()
   const withCoords = transactions.filter(t => t.latitude && t.longitude && t.dpe_classe)
   const pct = total > 0 ? Math.round((loaded / Math.min(total, 500)) * 100) : 0
 
@@ -105,7 +107,7 @@ export function MapView({ transactions, total, loaded, loading }: Props) {
       {/* Map */}
       <div style={{ position: 'relative', borderRadius: 'var(--rs-r-lg)', overflow: 'hidden',
         border: '1px solid var(--rs-ledger)', boxShadow: 'var(--rs-shadow-md)',
-        height: 'calc(100vh - 320px)', minHeight: 500 }}>
+        height: isMobile ? 'calc(100vh - 200px)' : 'calc(100vh - 320px)', minHeight: isMobile ? 400 : 500 }}>
         <MapContainer center={[48.8566, 2.3522]} zoom={12}
           style={{ width: '100%', height: '100%' }} zoomControl={false}>
           <TileLayer

@@ -4,6 +4,7 @@ import type { DvfFilters, TypeLocal } from '../types/dvf'
 interface Props {
   filters: DvfFilters
   onApply: (filters: DvfFilters) => void
+  mobileSheet?: boolean
 }
 
 const ARRONDISSEMENTS = Array.from({ length: 20 }, (_, i) => String(i + 1))
@@ -23,7 +24,7 @@ const label = (text: string) => (
   </div>
 )
 
-export function FilterSidebar({ filters, onApply }: Props) {
+export function FilterSidebar({ filters, onApply, mobileSheet }: Props) {
   const [local, setLocal] = useState<DvfFilters>(filters)
   const hasChanges = JSON.stringify(local) !== JSON.stringify(filters)
   const hasAny = !!(local.arrondissement || local.priceMin !== '' || local.priceMax !== '' || local.typeLocal)
@@ -34,7 +35,10 @@ export function FilterSidebar({ filters, onApply }: Props) {
   }
 
   return (
-    <aside style={{ width: 240, flexShrink: 0, position: 'sticky', top: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <aside style={mobileSheet
+      ? { display: 'flex', flexDirection: 'column', gap: 12 }
+      : { width: 240, flexShrink: 0, position: 'sticky', top: 24, display: 'flex', flexDirection: 'column', gap: 12 }
+    }>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
